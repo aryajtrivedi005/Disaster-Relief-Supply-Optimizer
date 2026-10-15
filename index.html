@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Disaster Relief Supply Optimizer - DAA Suite</title>
+  
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Production Minimalist Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-slate-50 text-slate-900 font-sans antialiased min-h-screen flex flex-col">
+
+  <!-- ==================================================================== -->
+  <!-- TOP APPLICATION NAVBAR -->
+  <!-- ==================================================================== -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-sm">
+    <div class="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+      
+      <!-- Brand Title -->
+      <div class="flex items-center gap-2.5">
+        <span class="w-8 h-8 rounded-md bg-slate-900 text-white flex items-center justify-center font-bold text-sm">⚡</span>
+        <div class="flex items-center gap-2">
+          <span class="font-bold text-sm sm:text-base text-slate-900 tracking-tight">Disaster Relief Supply Optimizer</span>
+          <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-slate-100 text-slate-700 border border-slate-200">DAA SUITE</span>
+        </div>
+      </div>
+
+      <!-- Module Navigation Menu (Center) -->
+      <nav class="flex items-center bg-slate-100 p-1 rounded-md border border-slate-200">
+        <button data-tab-target="knapsack" class="nav-tab-btn btn-std h-8 px-3 rounded-md text-xs font-semibold bg-white text-slate-900 shadow-sm">
+          1. Knapsack Cargo
+        </button>
+        <button data-tab-target="triage" class="nav-tab-btn btn-std h-8 px-3 rounded-md text-xs font-semibold text-slate-600 hover:text-slate-900 bg-transparent">
+          2. Priority Queue Dispatch
+        </button>
+        <button data-tab-target="route" class="nav-tab-btn btn-std h-8 px-3 rounded-md text-xs font-semibold text-slate-600 hover:text-slate-900 bg-transparent">
+          3. Greedy Scheduler
+        </button>
+        <button data-tab-target="classroom" class="nav-tab-btn btn-std h-8 px-2.5 rounded-md text-xs font-semibold text-slate-600 hover:text-slate-900 bg-transparent">
+          4. Big-O Lab
+        </button>
+      </nav>
+
+      <!-- Utilities Toolbar -->
+      <div class="flex items-center gap-2">
+        <select id="scenarioSelector" class="form-input-std h-9 text-xs font-semibold cursor-pointer">
+          <option value="himalayan">🏔️ Himalayan Cloudburst</option>
+          <option value="cyclone">🌊 Coastal Cyclone</option>
+          <option value="earthquake">🏢 Metro Seismic Quake</option>
+        </select>
+        <button id="btnExportReport" class="btn-std btn-secondary h-9 px-2.5 text-xs font-semibold" title="Export Mission Report">
+          Export Report
+        </button>
+        <button id="btnToggleSound" class="btn-std btn-secondary h-9 w-9 p-0" title="Toggle Audio">
+          <svg class="w-4 h-4 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path></svg>
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- ==================================================================== -->
+  <!-- LINE-BY-LINE STATUS BAR -->
+  <!-- ==================================================================== -->
+  <div class="bg-white border-b border-slate-200 py-2.5 text-xs">
+    <div class="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 flex flex-wrap items-center justify-between gap-3 font-mono">
+      <div class="flex items-center gap-3">
+        <span><strong class="text-slate-500 font-sans">Scenario:</strong> <span id="currentScenarioName" class="font-bold text-slate-900"></span></span>
+        <span class="text-slate-300">|</span>
+        <span><strong class="text-slate-500 font-sans">Vehicle:</strong> <span id="currentVehicleBadge" class="font-semibold text-slate-800"></span></span>
+      </div>
+      <div class="flex items-center gap-4 text-[11px]">
+        <span><strong class="text-slate-500 font-sans">Payload:</strong> <span id="metricCargoUtil" class="text-blue-700 font-bold"></span></span>
+        <span><strong class="text-slate-500 font-sans">Triage Queue:</strong> <span id="metricPendingCalls" class="text-rose-600 font-bold"></span></span>
+        <span><strong class="text-slate-500 font-sans">Dispatched:</strong> <span id="metricRescued" class="text-emerald-700 font-bold"></span></span>
+        <span><strong class="text-slate-500 font-sans">Active Convoys:</strong> <span id="metricActiveMissions" class="text-amber-700 font-bold"></span></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================================================================== -->
+  <!-- 3-PANEL STRUCTURED WORKSPACE -->
+  <!-- ==================================================================== -->
+  <main class="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full">
+
+    <!-- ================================================================== -->
+    <!-- MODULE 1: KNAPSACK CARGO (3-PANEL SPLIT) -->
+    <!-- ================================================================== -->
+    <section id="tabContent-knapsack" class="tab-content-panel">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        
+        <!-- LEFT PANEL: CONTROLS & INPUTS (Span 3) -->
+        <aside class="lg:col-span-3 space-y-5">
+          
+          <!-- Hold Capacity & Discipline -->
+          <div class="mini-card p-6 space-y-4">
+            <div class="border-b border-slate-100 pb-2">
+              <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider">Payload Settings</h3>
+            </div>
+
+            <div>
+              <div class="flex justify-between items-center mb-1 text-xs">
+                <label class="font-semibold text-slate-700">Vehicle Limit</label>
+                <span id="capacityValDisplay" class="font-mono font-bold text-blue-700">35 kg</span>
+              </div>
+              <input type="range" id="capacitySlider" min="5" max="300" step="5" class="w-full accent-blue-600 cursor-pointer">
+              <div class="flex items-center gap-2 mt-2">
+                <input type="number" id="capacityInput" min="1" max="500" class="form-input-std w-full text-center font-mono font-bold">
+                <span class="text-xs text-slate-500 font-semibold">kg</span>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1.5">Algorithm Discipline</label>
+              <div class="flex flex-col gap-1.5">
+                <button data-knapsack-mode="01" class="knapsack-mode-btn btn-std w-full justify-start text-xs font-semibold bg-slate-900 text-white">
+                  0/1 Knapsack (DP Table)
+                </button>
+                <button data-knapsack-mode="fractional" class="knapsack-mode-btn btn-std btn-secondary w-full justify-start text-xs font-semibold">
+                  Fractional Knapsack (Greedy)
+                </button>
+                <button data-knapsack-mode="compare" class="knapsack-mode-btn btn-std btn-secondary w-full justify-start text-xs font-semibold">
+                  Side-by-Side Dual View
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Add Item Form -->
+          <div class="mini-card p-6 space-y-3">
+            <div class="border-b border-slate-100 pb-2">
+              <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider">Add Supply Item</h3>
+            </div>
+
+            <form id="formAddCargoDirect" class="space-y-3 text-xs">
+              <div>
+                <label class="block font-semibold text-slate-700 mb-1">Item Description</label>
+                <input type="text" id="quickItemName" required placeholder="e.g. Plasma Cooler" class="form-input-std w-full">
+              </div>
+              <div class="grid grid-cols-2 gap-2.5">
+                <div>
+                  <label class="block font-semibold text-slate-700 mb-1">Weight (kg)</label>
+                  <input type="number" id="quickItemWeight" required min="1" max="100" value="6" class="form-input-std w-full font-mono">
+                </div>
+                <div>
+                  <label class="block font-semibold text-slate-700 mb-1">Priority (pts)</label>
+                  <input type="number" id="quickItemValue" required min="1" max="100" value="85" class="form-input-std w-full font-mono">
+                </div>
+              </div>
+              <div>
+                <label class="block font-semibold text-slate-700 mb-1">Category</label>
+                <select id="quickItemCategory" class="form-input-std w-full font-semibold">
+                  <option value="Medical">Medical Aid</option>
+                  <option value="Water">Water & Sanitation</option>
+                  <option value="Food">Food Rations</option>
+                  <option value="Shelter">Shelter & Thermal</option>
+                  <option value="Tech">Tech & Comms</option>
+                </select>
+              </div>
+              <button type="submit" class="btn-std btn-primary w-full mt-1">
+                Add to Manifest
+              </button>
+            </form>
+          </div>
+
+          <!-- Cargo Pool List -->
+          <div class="mini-card p-6 space-y-3">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+              <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider">Candidate Items</h3>
+              <span id="cargoItemsCountBadge" class="text-xs font-mono font-bold text-slate-500"></span>
+            </div>
+            <div id="knapsackMiniItemList" class="space-y-1.5 max-h-[240px] overflow-y-auto pr-1"></div>
+          </div>
+
+        </aside>
+
+        <!-- CENTER PANEL: VISUALIZER (Span 6) -->
+        <section class="lg:col-span-6 space-y-5 min-w-0">
+          
+          <!-- Playback Toolbar -->
+          <div class="mini-card p-4 flex flex-wrap items-center justify-between gap-3 text-xs">
+            <div class="flex items-center gap-1.5">
+              <button id="btnPrevKnapsack" class="btn-std btn-secondary h-9 px-2.5" title="Previous Step">◀</button>
+              <button id="btnPlayKnapsack" class="btn-std btn-primary h-9 px-3">Play Trace</button>
+              <button id="btnNextKnapsack" class="btn-std btn-secondary h-9 px-2.5" title="Next Step">▶</button>
+              <button id="btnEndKnapsack" class="btn-std btn-secondary h-9 px-2.5">Fast-Forward</button>
+              <span id="knapsackStepCounter" class="text-slate-500 font-mono font-bold ml-2"></span>
+            </div>
+
+            <div class="flex items-center gap-3 text-[11px] font-medium text-slate-600">
+              <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 bg-emerald-100 border border-emerald-400 rounded-sm"></span> Optimal Path</span>
+              <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 bg-amber-100 border border-amber-400 rounded-sm"></span> Active Cell</span>
+            </div>
+          </div>
+
+          <!-- Dynamic Visual Display Canvas -->
+          <div class="mini-card p-6">
+            <div id="knapsackVisualizerContainer" class="w-full"></div>
+          </div>
+
+        </section>
+
+        <!-- RIGHT PANEL: LINE-BY-LINE METRICS & TRACE (Span 3) -->
+        <aside class="lg:col-span-3 space-y-5">
+          
+          <!-- Algorithm Metrics Line-by-Line -->
+          <div class="mini-card p-6 space-y-3">
+            <div class="border-b border-slate-100 pb-2">
+              <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider">Algorithm Metrics</h3>
+            </div>
+
+            <div class="space-y-0.5">
+              <div class="kv-row">
+                <span class="kv-label">Algorithm</span>
+                <span class="kv-val text-blue-700">0/1 DP & Greedy</span>
+              </div>
+              <div class="kv-row">
+                <span class="kv-label">Time Complexity</span>
+                <span class="kv-val">O(n · W)</span>
+              </div>
+              <div class="kv-row">
+                <span class="kv-label">Space Complexity</span>
+                <span class="kv-val">O(n · W)</span>
+              </div>
+              <div id="knapsackRightMetricsContainer" class="space-y-0.5"></div>
+            </div>
+          </div>
+
+          <!-- Live Step Execution Log -->
+          <div class="mini-card p-6 space-y-3">
+            <div class="border-b border-slate-100 pb-2">
+              <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider">Execution Decisions</h3>
+            </div>
+            <div id="knapsackStepTraceLog" class="max-h-[260px] overflow-y-auto pr-1 space-y-1.5 font-mono text-[11px]"></div>
+          </div>
+
+        </aside>
+
+      </div>
+    </section>
+
+    <!-- ================================================================== -->
+    <!-- MODULE 2: PRIORITY QUEUE DISPATCH (3-PANEL SPLIT) -->
+    <!-- ================================================================== -->
+    <section id="tabContent-triage" class="tab-content-panel hidden">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        
+        <!-- LEFT PANEL: CONTROLS & INPUTS (Span 3) -->
+        <aside class="lg:col-span-3 space-y-5">
+          
+          <!-- Dispatch Action Card -->
+          <div class="mini-card p-6 space-y-4">
+            <div class="border-b border-slate-100 pb-2">
+              <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider">Queue Controls</h3>
+            </div>
+
+            <button id="btnDispatchTriage" class="btn-std btn-danger w-full text-xs font-bold">
+              Dispatch Next Emergency (Extract Root)
+            </button>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1.5">Heap Invariant</label>
+              <div class="flex flex-col gap-1.5">
+                <button id="btnMaxHeap" class="heap-mode-btn btn-std w-full justify-start text-xs font-semibold bg-slate-900 text-white">
+                  Max-Heap (Severity Urgency)
+                </button>
+                <button id="btnMinHeap" class="heap-mode-btn btn-std btn-secondary w-full justify-start text-xs font-semibold">
+                  Min-Heap (ETA Deadline Window)
+                </button>
+              </div>
+            </div>
+
+            <button id="btnAddRandomDistress" class="btn-std btn-secondary w-full text-xs font-semibold">
+              Simulate Incoming Call
+            </button>
+          </div>
+
+          <!-- Log Incident Form -->
+          <div class="mini-card p-6 space-y-3">
+            <div class="border-b border-slate-100 pb-2">
+              <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider">Log Distress Incident</h3>
+            </div>
+
+            <form id="formAddDistressDirect" class="space-y-3 text-xs">
+              <div>
+                <label class="block font-semibold text-slate-700 mb-1">Landmark / Zone</label>
+                <input type="text" id="quickDistressLocation" required placeholder="e.g. Ridge 4 Shelter" class="form-input-std w-full">
+              </div>
+              <div class="grid grid-cols-2 gap-2.5">
+                <div>
+                  <label class="block font-semibold text-slate-700 mb-1">Urgency (1-100)</label>
+                  <input type="number" id="quickDistressUrgency" required min="1" max="100" value="88" class="form-input-std w-full font-mono">
+                </div>
+                <div>
+                  <label class="block font-semibold text-slate-700 mb-1">Casualties</label>
+                  <input type="number" id="quickDistressCasualties" required min="0" max="500" value="14" class="form-input-std w-full font-mono">
+                </div>
+              </div>
+              <div class="grid grid-cols-2 gap-2.5">
+                <div>
+                  <label class="block font-semibold text-slate-700 mb-1">ETA Window (min)</label>
+                  <input type="number" id="quickDistressDeadline" required min="5" max="360" value="35" class="form-input-std w-full font-mono">
+                </div>
+                <div>
+                  <label class="block font-semibold text-slate-700 mb-1">Priority Aid</label>
+                  <input type="text" id="quickDistressSupplies" placeholder="e.g. Plasma" class="form-input-std w-full">
+                </div>
+              </div>
+              <button type="submit" class="btn-std btn-primary w-full mt-1">
+                Insert Into Heap
+              </button>
+            </form>
+          </div>
+
+        </aside>
+
+        <!-- CENTER PANEL: VISUALIZER (Span 6) -->
+        <section class="lg:col-span-6 space-y-5 min-w-0">
+          
+          <!-- Tree Header Bar -->
+          <div class="mini-card p-4 flex flex-wrap items-center justify-between gap-3 text-xs">
+            <div class="flex items-center gap-2">
+              <span class="font-bold text-slate-900">Binary Heap Tree (SVG)</span>
+              <span id="triageQueueCountBadge" class="px-2 py-0.5 rounded font-mono font-bold bg-slate-100 text-slate-700 border border-slate-200"></span>
+            </div>
+            <div class="flex items-center gap-3 text-[11px] font-medium text-slate-600">
+              <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-rose-600"></span> Critical (≥90)</span>
+              <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-amber-500"></span> High (≥75)</span>
+              <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-blue-600"></span> Medium (≥50)</span>
+              <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-600"></span> Low</span>
+            </div>
+          </div>
+
+          <!-- Tree SVG Canvas -->
+          <div class="mini-card p-6">
+            <div class="w-full bg-slate-50/60 border border-slate-200 rounded-md min-h-[340px] flex items-center justify-center overflow-hidden">
+              <svg id="heapSvgCanvas" class="w-full h-[340px]"></svg>
+            </div>
+          </div>
+
+          <!-- Array Memory View -->
+          <div class="mini-card p-6 space-y-3">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-2 text-xs">
+              <span class="font-bold text-slate-900 uppercase tracking-wider">Sequential Array Buffer</span>
+              <span class="font-mono text-slate-500">Parent = ⌊(i-1)/2⌋ | Children = 2i+1, 2i+2</span>
+            </div>
+            <div id="heapArrayContainer" class="pt-1"></div>
+          </div>
+
+        </section>
+
+        <!-- RIGHT PANEL: LINE-BY-LINE METRICS & TRACE (Span 3) -->
+        <aside class="lg:col-span-3 space-y-5">
+          
+          <!-- Next Target Card -->
+          <div class="mini-card p-6 space-y-2 border-l-4 border-l-rose-600">
+            <div class="text-[10px] font-bold text-rose-700 uppercase tracking-wider">Next Target (Root Index 0)</div>
+            <div id="nextPriorityIncidentCard"></div>
+          </div>
+
+          <!-- Queue Metrics Line-by-Line -->
+          <div class="mini-card p-6 space-y-3">
+            <div class="border-b border-slate-100 pb-2">
+              <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider">Queue Metrics</h3>
+            </div>
+
+            <div class="space-y-0.5">
+              <div class="kv-row">
+                <span class="kv-label">Data Structure</span>
+                <span class="kv-val text-blue-700">Binary Heap</span>
+              </div>
+              <div class="kv-row">
+                <span class="kv-label">Tree Height</span>
+                <span class="kv-val">h = ⌊log₂ n⌋</span>
+              </div>
+              <div class="kv-row">
+                <span class="kv-label">Insert Operation</span>
+                <span class="kv-val">O(log n)</span>
+              </div>
+              <div class="kv-row">
+                <span class="kv-label">Extract-Root</span>
+                <span class="kv-val">O(log n)</span>
+              </div>
+              <div class="kv-row">
+                <span class="kv-label">Peek Operation</span>
+                <span class="kv-val text-emerald-700">O(1)</span>
+              </div>
+              <div id="triageRightMetricsContainer" class="space-y-0.5"></div>
+            </div>
+          </div>
+
+          <!-- Heapify Trace Log -->
+          <div class="mini-card p-6 space-y-3">
+            <div class="border-b border-slate-100 pb-2">
+              <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider">Heapify Operations</h3>
+            </div>
+            <div id="triageExecutionLog" class="max-h-[260px] overflow-y-auto pr-1 space-y-1.5 font-mono text-[11px]"></div>
+          </div>
+
+        </aside>
+
+      </div>
+    </section>
+
+    <!-- ================================================================== -->
+    <!-- MODULE 3: GREEDY SCHEDULER (3-PANEL SPLIT) -->
+    <!-- ================================================================== -->
+    <section id="tabContent-route" class="tab-content-panel hidden">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        
+        <!-- LEFT PANEL: CONTROLS & INPUTS (Span 3) -->
+        <aside class="lg:col-span-3 space-y-5">
+          
+          <!-- Strategy Selector Card -->
+          <div class="mini-card p-6 space-y-4">
+            <div class="border-b border-slate-100 pb-2">
+              <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider">Scheduling Rule</h3>
+            </div>
+
+            <div class="flex flex-col gap-1.5">
+              <button data-route-strategy="EFT" class="route-strat-btn btn-std w-full justify-between text-xs font-semibold bg-emerald-50 text-emerald-900 border border-emerald-300">
+                <span>Earliest Finish Time (EFT)</span>
+                <span class="font-mono text-[10px] bg-emerald-200 px-1 rounded">Optimal</span>
+              </button>
+              <button data-route-strategy="EST" class="route-strat-btn btn-std btn-secondary w-full justify-between text-xs font-semibold">
+                <span>Earliest Start Time (EST)</span>
+                <span class="font-mono text-[10px] bg-slate-100 px-1 rounded">Suboptimal</span>
+              </button>
+              <button data-route-strategy="DURATION" class="route-strat-btn btn-std btn-secondary w-full justify-between text-xs font-semibold">
+                <span>Shortest Duration First</span>
+                <span class="font-mono text-[10px] bg-slate-100 px-1 rounded">Suboptimal</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Schedule Mission Form -->
+          <div class="mini-card p-6 space-y-3">
+            <div class="border-b border-slate-100 pb-2">
+              <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider">Schedule Mission Slot</h3>
+            </div>
+
+            <form id="formAddMissionDirect" class="space-y-3 text-xs">
+              <div>
+                <label class="block font-semibold text-slate-700 mb-1">Codename</label>
+                <input type="text" id="quickMissionName" required placeholder="e.g. Aero-Relief 5" class="form-input-std w-full">
+              </div>
+              <div class="grid grid-cols-2 gap-2.5">
+                <div>
+                  <label class="block font-semibold text-slate-700 mb-1">Start (05-20)</label>
+                  <input type="number" id="quickMissionStart" required min="5" max="20" value="8" class="form-input-std w-full font-mono">
+                </div>
+                <div>
+                  <label class="block font-semibold text-slate-700 mb-1">End (06-21)</label>
+                  <input type="number" id="quickMissionEnd" required min="6" max="21" value="11" class="form-input-std w-full font-mono">
+                </div>
+              </div>
+              <div class="grid grid-cols-2 gap-2.5">
+                <div>
+                  <label class="block font-semibold text-slate-700 mb-1">Target Zone</label>
+                  <input type="text" id="quickMissionZone" placeholder="e.g. Sector 2" class="form-input-std w-full">
+                </div>
+                <div>
+                  <label class="block font-semibold text-slate-700 mb-1">Asset</label>
+                  <select id="quickMissionType" class="form-input-std w-full font-semibold">
+                    <option value="Cargo Drone">Cargo Drone</option>
+                    <option value="Chinook Helo">Chinook Helo</option>
+                    <option value="4x4 Unimog">4x4 Unimog</option>
+                  </select>
+                </div>
+              </div>
+              <button type="submit" class="btn-std btn-primary w-full mt-1">
+                Schedule Slot
+              </button>
+            </form>
+          </div>
+
+          <!-- Missions List -->
+          <div class="mini-card p-6 space-y-3">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+              <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider">Flights Pool</h3>
+              <span id="routeMissionsCountBadge" class="text-xs font-mono font-bold text-slate-500"></span>
+            </div>
+            <div id="routeMiniMissionList" class="space-y-1.5 max-h-[220px] overflow-y-auto pr-1"></div>
+          </div>
+
+        </aside>
+
+        <!-- CENTER PANEL: VISUALIZER (Span 6) -->
+        <section class="lg:col-span-6 space-y-5 min-w-0">
+          
+          <!-- Timeline Header -->
+          <div class="mini-card p-4 flex flex-wrap items-center justify-between gap-3 text-xs">
+            <span class="font-bold text-slate-900">Corridor Dispatch Timeline (05:00 - 21:00)</span>
+            <div class="flex items-center gap-3 text-[11px] font-medium text-slate-600">
+              <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 bg-emerald-600 rounded-sm"></span> Dispatched</span>
+              <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 bg-rose-100 border border-rose-300 rounded-sm"></span> Conflict Clash</span>
+            </div>
+          </div>
+
+          <!-- Gantt Container -->
+          <div class="mini-card p-6">
+            <div id="ganttChartContainer" class="w-full"></div>
+          </div>
+
+        </section>
+
+        <!-- RIGHT PANEL: LINE-BY-LINE METRICS & TRACE (Span 3) -->
+        <aside class="lg:col-span-3 space-y-5">
+          
+          <!-- Scheduler Metrics Line-by-Line -->
+          <div class="mini-card p-6 space-y-3">
+            <div class="border-b border-slate-100 pb-2">
+              <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider">Scheduler Metrics</h3>
+            </div>
+
+            <div class="space-y-0.5">
+              <div class="kv-row">
+                <span class="kv-label">Algorithm</span>
+                <span class="kv-val text-blue-700">Activity Selection</span>
+              </div>
+              <div class="kv-row">
+                <span class="kv-label">Strategy</span>
+                <span class="kv-val" id="metricRouteStrat">EFT (Optimal)</span>
+              </div>
+              <div class="kv-row">
+                <span class="kv-label">Time Complexity</span>
+                <span class="kv-val">O(n log n)</span>
+              </div>
+              <div class="kv-row">
+                <span class="kv-label">Space Complexity</span>
+                <span class="kv-val">O(n)</span>
+              </div>
+              <div id="routeRightMetricsContainer" class="space-y-0.5"></div>
+            </div>
+          </div>
+
+          <!-- Sequential Decisions Log -->
+          <div class="mini-card p-6 space-y-3">
+            <div class="border-b border-slate-100 pb-2">
+              <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider">Greedy Decisions</h3>
+            </div>
+            <div id="routeDecisionLog" class="max-h-[260px] overflow-y-auto pr-1 space-y-1.5 font-mono text-[11px]"></div>
+          </div>
+
+        </aside>
+
+      </div>
+    </section>
+
+    <!-- ================================================================== -->
+    <!-- MODULE 4: BIG-O BENCHMARK LAB -->
+    <!-- ================================================================== -->
+    <section id="tabContent-classroom" class="tab-content-panel hidden space-y-6">
+      
+      <div class="mini-card p-6 flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider">Empirical Complexity Benchmark</h3>
+          <p class="text-xs text-slate-500 font-mono mt-0.5">Tests O(n·W), O(n log n), O(log n) across N = 10 to 1000.</p>
+        </div>
+        <button id="btnRunBenchmark" class="btn-std btn-primary">
+          Run Benchmark Suite
+        </button>
+      </div>
+
+      <!-- Canvas Chart Container -->
+      <div class="mini-card p-6 space-y-3">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-2 text-xs font-mono">
+          <span class="font-bold text-slate-900">Runtime (ms) vs Problem Size (N)</span>
+          <span class="text-slate-500">Amber: O(n·W) | Blue: O(n log n) | Rose: O(log n) | Green: O(n log n)</span>
+        </div>
+        <div class="w-full bg-white rounded-md border border-slate-200 p-2">
+          <canvas id="benchmarkCanvas" class="w-full h-[320px]"></canvas>
+        </div>
+      </div>
+
+      <!-- Measurement Table -->
+      <div class="mini-card p-6 space-y-3">
+        <h4 class="text-xs font-bold text-slate-900 uppercase tracking-wider border-b border-slate-100 pb-2">Measurement Log</h4>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse table-minimal text-xs font-mono">
+            <thead>
+              <tr>
+                <th>Input Size (N)</th>
+                <th class="text-center text-amber-700">0/1 Knapsack O(n·W)</th>
+                <th class="text-center text-blue-700">Fractional O(n log n)</th>
+                <th class="text-center text-rose-700">Priority Heap O(log n)</th>
+                <th class="text-center text-emerald-700">Greedy Interval O(n log n)</th>
+              </tr>
+            </thead>
+            <tbody id="benchmarkTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
